@@ -1,0 +1,20 @@
+language: node_js
+services:
+  - docker
+node_js:
+  - "8"
+cache:
+  directories:
+    - node_modules
+before_install:
+install:
+  - npm install
+before_script:
+script:
+  - npm test
+after_success:
+after_failure:
+before_deploy:
+deploy:
+after_deploy:
+after_script:
