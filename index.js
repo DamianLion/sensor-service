@@ -1,6 +1,18 @@
-var app = require('express')();
-var server = require('http').Server(app);
-var io = require('socket.io')(server);
+const app = require('express')();
+const server = require('http').Server(app);
+const io = require('socket.io')(server);
+const RethinkDb = require('./src/lib/RethinkDB');
+
+//RethinkDB
+let connection = new RethinkDb('localhost', 28015).connection
+    .then(conn => {
+      return conn;
+    })
+    .catch(err => {
+      throw err;
+    });
+
+
 
 server.listen(3000);
 
