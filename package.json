@@ -10,6 +10,7 @@
   "author": "Damian Lion Maring",
   "licence": "GPL-3.0",
   "dependencies": {
+    "body-parser": "1.18.2",
     "express": "4.15.4",
     "install": "0.10.1",
     "npm": "5.4.2",

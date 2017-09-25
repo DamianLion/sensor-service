@@ -1,41 +1,28 @@
-const app = require('express')();
-const server = require('http').Server(app);
-const io = require('socket.io')(server);
-const RethinkDb = require('./src/lib/RethinkDB');
+const RethinkDb = require('./src/lib/RethinkDb');
+const config = require('./src/config/config');
 
 //RethinkDB
-let connection = new RethinkDb('localhost', 28015).connection
-    .then(conn => {
-      return conn;
+const rethinkDb = new RethinkDb();
+rethinkDb.connect()
+    .then(connection => {
+        return rethinkDb.init(config.rethinkdb.db);
+    })
+    .then(result => {
+        rethinkDb.close()
+        boot()
     })
     .catch(err => {
-      throw err;
+        throw err
     });
 
-
-
-server.listen(3000);
-
-/* app.get('/', function (req, res) {
-  res.sendfile(__dirname + '/index.html');
-}); */
-
-setInterval(function() {  
-  io.sockets.emit('waterLevelEmit', {
-    timeStamp: new Date(),
-    unit: 'ml',
-    value: randomIntFromInterval(200,400)
-  });
-}, 1000);
-
-io.on('connection', function (socket) {
-  //socket.emit('waterLevelEmit', { level: 300 });
-  socket.on('my other event', function (data) {
-    console.log(data);
-  });
-});
-
-function randomIntFromInterval(min,max)
-{
-    return Math.floor(Math.random()*(max-min+1)+min);
+function boot() {
+    const app = require('./src/app');
+    const port = process.env.PORT || 3000;
+    app.set('port', port);
+    app.listen(app.get('port'), function () {
+        console.info(`Express server listening on port ${ port }`);
+    }).on('error', function (err) {
+        console.error('Cannot start server, port most likely in use');
+        console.error(err);
+    });
 }
