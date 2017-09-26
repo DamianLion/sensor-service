@@ -2,7 +2,7 @@ const http = require('http')
 
 const RethinkDb = require('./lib/RethinkDb');
 const config = require('./config/config');
-const Io = require('./lib/Io');
+const Io = require('./lib/Socket');
 
 //RethinkDB
 const rethinkDb = new RethinkDb();

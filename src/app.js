@@ -1,5 +1,5 @@
 const app = require('express')();
-const Io = require('./lib/Io');
+const Socket = require('./lib/Socket');
 
 const RethinkDb = require('./lib/RethinkDb');
 const rethinkDb = new RethinkDb('localhost', 28015);
@@ -38,14 +38,14 @@ app.use(router);
 app.use(closeConnection);
 
 setInterval(function() {
-    Io.getIO().sockets.emit('sensor', {
+    Socket.io().sockets.emit('sensor', {
         timeStamp: new Date(),
         unit: 'ml',
         value: randomIntFromInterval(200,400)
     });
 }, 1000);
 
-Io.getIO().on('connection', function (socket) {
+Socket.io().on('connection', function (socket) {
     socket.emit('waterLevelEmit', { level: 300 });
     socket.on('my other event', function (data) {
         console.log(data);
