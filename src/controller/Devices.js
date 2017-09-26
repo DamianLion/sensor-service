@@ -3,44 +3,11 @@ const RethinkDb = require('../lib/RethinkDb');
 const config = require('../config/config');
 const Socket = require('../lib/Socket');
 
-function feed(connection) {
-    r.db(config.rethinkdb.db)
-        .table('sensors')
-        .changes({
-            includeTypes: 'add',
-            squash: false,
-            includeInitial: false
-        })
-        .run(connection, function(err, cursor) {
-            cursor.each((err, row) => {
-                if (err) throw err;
-                console.log(row);
-                Socket.io().sockets.emit('sensor', row.new_val);
-            });
-        });
-}
-
-//RethinkDB
-const rethinkDb = new RethinkDb();
-rethinkDb.connect()
-    .then(connection => {
-        feed(connection);
-    })
-    .catch(err => {
-        console.log(err)
-    });
-
 class Sensors {
     static getAll(req, res, next) {
         r.db(config.rethinkdb.db)
-            .table('sensors')
+            .table('devices')
             .orderBy({index: "createdAt"})
-            .merge(function(sensor) {
-                return {
-                    device: r.table("devices").get(sensor("device_id"))
-                }
-            })
-            .without('device_id')
             .run(req._rdbConn)
             .then(function (cursor) {
                 return cursor.toArray();
@@ -55,7 +22,7 @@ class Sensors {
         let sensorData = req.body;
         sensorData.createdAt = r.now(); // Set the field `createdAt` to the current time
         r.db(config.rethinkdb.db)
-            .table('sensors')
+            .table('devices')
             .insert(sensorData, {returnChanges: true})
             .run(req._rdbConn)
             .then(result => {

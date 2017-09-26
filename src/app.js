@@ -37,13 +37,15 @@ app.use(router);
 // Middleware to close a connection to the database
 app.use(closeConnection);
 
-setInterval(function() {
+// TODO implement changefeed socket events
+
+/* setInterval(function() {
     Socket.io().sockets.emit('sensor', {
         timeStamp: new Date(),
         unit: 'ml',
         value: randomIntFromInterval(200,400)
     });
-}, 1000);
+}, 1000); */
 
 Socket.io().on('connection', function (socket) {
     socket.emit('waterLevelEmit', { level: 300 });
@@ -52,9 +54,9 @@ Socket.io().on('connection', function (socket) {
     });
 });
 
-function randomIntFromInterval(min,max)
+/* function randomIntFromInterval(min,max)
 {
     return Math.floor(Math.random()*(max-min+1)+min);
-}
+} */
 
 module.exports= app;

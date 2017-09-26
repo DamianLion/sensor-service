@@ -44,7 +44,7 @@ class RethinkDB {
                 );
             }).run(this.connection, (err, result) => {
                 if (err) reject(err);
-                console.log('created', result.created);
+                console.log('index created', result.created, db);
                 fulfill(result);
             });
         })
@@ -60,7 +60,7 @@ class RethinkDB {
                 );
             }).run(this.connection, (err, result) => {
                 if (err) reject(err);
-                console.log('dbs_created', result.dbs_created);
+                console.log('dbs_created', result.dbs_created, db);
                 fulfill(result);
             });
         })
@@ -76,7 +76,7 @@ class RethinkDB {
                 );
             }).run(this.connection, (err, result) => {
                 if (err) reject(err);
-                console.log('tables_created', result.tables_created);
+                console.log('tables_created', result.tables_created, table);
                 fulfill(result);
             });
         })
@@ -84,13 +84,23 @@ class RethinkDB {
 
     init(db) {
         return new Promise((fulfill, reject) => {
-            //should only create db and table if nothing is there yet
+            /**
+             * should only create db and table if nothing is there yet
+             * - sensors
+             * - device
+             */
             this.createDb(db)
                 .then(result => {
                     return this.createTable(db, 'sensors')
                 })
                 .then(result => {
+                    return this.createTable(db, 'devices')
+                })
+                .then(result => {
                     return this.createIndex(db, 'sensors', 'createdAt')
+                })
+                .then(result => {
+                    return this.createIndex(db, 'devices', 'createdAt')
                 })
                 .then(result => {
                     fulfill(result)
