@@ -97,6 +97,9 @@ class RethinkDB {
                     return this.createTable(db, 'devices')
                 })
                 .then(result => {
+                    return this.createTable(db, 'data')
+                })
+                .then(result => {
                     return this.createIndex(db, 'sensors', 'createdAt')
                 })
                 .then(result => {

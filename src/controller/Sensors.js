@@ -1,43 +1,39 @@
 const r = require('rethinkdb');
-const RethinkDb = require('../lib/RethinkDb');
 const config = require('../config/config');
-const Socket = require('../lib/Socket');
 
-function feed(connection) {
-    r.db(config.rethinkdb.db)
-        .table('sensors')
-        .changes({
-            includeTypes: 'add',
-            squash: false,
-            includeInitial: false
-        })
-        .run(connection, function(err, cursor) {
-            cursor.each((err, row) => {
-                if (err) throw err;
-                console.log(row);
-                Socket.io().sockets.emit('sensor', row.new_val);
-            });
-        });
-}
-
-//RethinkDB
-const rethinkDb = new RethinkDb();
-rethinkDb.connect()
-    .then(connection => {
-        feed(connection);
-    })
-    .catch(err => {
-        console.log(err)
-    });
+const table = 'sensors';
 
 class Sensors {
-    static getAll(req, res, next) {
+    static getOne (req, res, next) {
+        const id = req.params.id;
         r.db(config.rethinkdb.db)
-            .table('sensors')
+            .table(table)
+            .get(id)
+            .merge(function(sensor) {
+                return {
+                    device: r.table("devices").get(sensor("device_id")),
+                    data: r.table("data").filter((data) => {
+                        return data("sensor_id").eq(sensor("id"))
+                    }).coerceTo("ARRAY")
+                }
+            })
+            .run(req._rdbConn)
+            .then(result => {
+                res.json(result);
+            })
+            .catch(err => next(err));
+    }
+
+    static getAll (req, res, next) {
+        r.db(config.rethinkdb.db)
+            .table(table)
             .orderBy({index: "createdAt"})
             .merge(function(sensor) {
                 return {
-                    device: r.table("devices").get(sensor("device_id"))
+                    device: r.table("devices").get(sensor("device_id")),
+                    data: r.table("data").filter((data) => {
+                        return data("sensor_id").eq(sensor("id"))
+                    }).coerceTo("ARRAY")
                 }
             })
             .without('device_id')
@@ -51,11 +47,41 @@ class Sensors {
             .catch(err => next(err));
     }
 
-    static post(req, res, next) {
+    static updateOne (req, res, next) {
+        const id = req.params.id;
+        const sensor = req.body;
+
+        if (sensor && id) {
+            r.db(config.rethinkdb.db)
+                .table(table)
+                .get(id)
+                .update(sensor, {returnChanges: true})
+                .run(req._rdbConn)
+                .then(result => {
+                    if (result.changes && result.changes.length > 0 && result.changes[0] && result.changes[0].new_val) {
+                        return res.json(result.changes[0].new_val);
+                    } else {
+                        return next(new Error("Nothing changed"));
+                    }
+                })
+                .catch(err => next(err));
+        }
+        else {
+            next(new Error("Input Validation Failed"));
+        }
+    }
+
+    static deleteOne (req, res, next) {
+        const id = req.params.id;
+        // TODO implement deletion
+        res.end();
+    }
+
+    static post (req, res, next) {
         let sensorData = req.body;
         sensorData.createdAt = r.now(); // Set the field `createdAt` to the current time
         r.db(config.rethinkdb.db)
-            .table('sensors')
+            .table(table)
             .insert(sensorData, {returnChanges: true})
             .run(req._rdbConn)
             .then(result => {
