@@ -1,12 +1,42 @@
-const r = require( 'rethinkdb' );
+const r = require('rethinkdb');
+const RethinkDb = require('../lib/RethinkDb');
+const config = require('../config/config');
+const io = require('socket.io');
+
+function activateChangefeed(connection) {
+    r.db(config.rethinkdb.db).table('sensors').changes({
+        // includeTypes: 'add'
+        // includeInitial: false
+    }).run(connection, function(err, cursor) {
+        cursor.next(function(err, row) {
+            if (err) throw err;
+            console.log(row);
+            global.io.sockets.emit('waterLevelEmit', {
+                timeStamp: new Date(),
+                unit: 'ml',
+                value: 1000
+            });
+        });
+    });
+}
+
+//RethinkDB
+const rethinkDb = new RethinkDb();
+rethinkDb.connect()
+    .then(connection => {
+        activateChangefeed(connection);
+    })
+    .catch(err => {
+        console.log(err)
+    });
 
 class Sensors {
-    static getAll (req, res, next) {
-        r.db('cuyplin')
+    static getAll(req, res, next) {
+        r.db(config.rethinkdb.db)
             .table('sensors')
             .orderBy({index: "createdAt"})
             .run(req._rdbConn)
-            .then(function(cursor) {
+            .then(function (cursor) {
                 return cursor.toArray();
             })
             .then(result => {
@@ -15,10 +45,10 @@ class Sensors {
             .catch(err => next(err));
     }
 
-    static post (req, res, next) {
+    static post(req, res, next) {
         let sensorData = req.body;
         sensorData.createdAt = r.now(); // Set the field `createdAt` to the current time
-        r.db('cuyplin')
+        r.db(config.rethinkdb.db)
             .table('sensors')
             .insert(sensorData, {returnChanges: true})
             .run(req._rdbConn)

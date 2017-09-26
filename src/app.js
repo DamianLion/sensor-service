@@ -1,21 +1,21 @@
 const app = require('express')();
-const server = require('http').Server(app);
-const io = require('socket.io')(server);
+const Io = require('./lib/Io');
+
+const RethinkDb = require('./lib/RethinkDb');
+const rethinkDb = new RethinkDb('localhost', 28015);
+
 const bodyParser = require('body-parser');
-
-const RethinkDbInterface = require('./lib/RethinkDb');
-const RethinkDb = new RethinkDbInterface('localhost', 28015);
-
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
-/*
- * Create a RethinkDB connection, and save it in req._rdbConn
- */
+const cors = require('cors');
+app.use(cors());
+
+// Create a RethinkDB connection, and save it in req._rdbConn
 function createConnection(req, res, next) {
-    RethinkDb.connect()
+    rethinkDb.connect()
         .then(connection => {
-            req._rdbConn = connection
+            req._rdbConn = connection;
             next();
         })
         .catch(err => {
@@ -23,9 +23,7 @@ function createConnection(req, res, next) {
         });
 }
 
-/*
- * Close the RethinkDB connection
- */
+// Close the RethinkDB connection
 function closeConnection(req, res, next) {
     req._rdbConn.close();
 }
@@ -40,15 +38,15 @@ app.use(router);
 app.use(closeConnection);
 
 setInterval(function() {
-    io.sockets.emit('waterLevelEmit', {
+    Io.getIO().sockets.emit('sensor', {
         timeStamp: new Date(),
         unit: 'ml',
         value: randomIntFromInterval(200,400)
     });
 }, 1000);
 
-io.on('connection', function (socket) {
-    //socket.emit('waterLevelEmit', { level: 300 });
+Io.getIO().on('connection', function (socket) {
+    socket.emit('waterLevelEmit', { level: 300 });
     socket.on('my other event', function (data) {
         console.log(data);
     });
