@@ -56,8 +56,21 @@ class Sensors {
 
     static deleteOne (req, res, next) {
         const id = req.params.id;
-        // TODO implement deletion
-        res.end();
+
+        if (id) {
+            r.db(config.rethinkdb.db)
+                .table(table)
+                .get(id)
+                .delete()
+                .run(req._rdbConn)
+                .then(result => {
+                    return res.json(result);
+                })
+                .catch(err => next(err));
+        }
+        else {
+            next(new Error("Input Validation Failed"));
+        }
     }
 
     static post (req, res, next) {

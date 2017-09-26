@@ -26,6 +26,8 @@ router.post('/api/v1/sensors', Sensors.post);
  */
 const Data = require('../controller/Data');
 router.get('/api/v1/data', Data.getAll);
+router.get('/api/v1/data/:id', Data.getOne);
+router.delete('/api/v1/data/:id', Data.deleteOne);
 router.post('/api/v1/data', Data.post);
 
 
