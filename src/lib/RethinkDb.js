@@ -106,6 +106,9 @@ class RethinkDB {
                     return this.createIndex(db, 'devices', 'createdAt')
                 })
                 .then(result => {
+                    return this.createIndex(db, 'data', 'createdAt')
+                })
+                .then(result => {
                     fulfill(result)
                 })
                 .catch(err => {

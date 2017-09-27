@@ -12,9 +12,9 @@ class Sensors {
             .merge(function(sensor) {
                 return {
                     device: r.table("devices").get(sensor("device_id")),
-                    data: r.table("data").filter((data) => {
+                    data: r.table("data").orderBy({index: "createdAt"}).filter((data) => {
                         return data("sensor_id").eq(sensor("id"))
-                    }).coerceTo("ARRAY")
+                    }).limit(10).coerceTo("ARRAY")
                 }
             })
             .run(req._rdbConn)
@@ -33,7 +33,7 @@ class Sensors {
                     device: r.table("devices").get(sensor("device_id")),
                     data: r.table("data").filter((data) => {
                         return data("sensor_id").eq(sensor("id"))
-                    }).coerceTo("ARRAY")
+                    }).limit(10).coerceTo("ARRAY")
                 }
             })
             .without('device_id')
@@ -61,7 +61,7 @@ class Sensors {
                     if (result.changes && result.changes.length > 0 && result.changes[0] && result.changes[0].new_val) {
                         return res.json(result.changes[0].new_val);
                     } else {
-                        return next(new Error("Nothing changed"));
+                        return res.json(result)
                     }
                 })
                 .catch(err => next(err));
