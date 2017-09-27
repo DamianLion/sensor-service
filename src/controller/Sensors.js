@@ -10,16 +10,20 @@ class Sensors {
             .table(table)
             .get(id)
             .merge(function(sensor) {
+                let data = r.table("data").orderBy({index: r.desc("createdAt")}).filter((data) => {
+                    return data("sensor_id").eq(sensor("id"))
+                });
+
                 return {
                     device: r.table("devices").get(sensor("device_id")),
-                    data: r.table("data").orderBy({index: "createdAt"}).filter((data) => {
-                        return data("sensor_id").eq(sensor("id"))
-                    }).limit(10).coerceTo("ARRAY")
+                    data: data.limit(10).coerceTo("array"),
+                    value: data.nth(0).getField("value"),
+                    lastUpdated: data.nth(0).getField("createdAt")
                 }
             })
             .run(req._rdbConn)
-            .then(result => {
-                res.json(result);
+            .then(sensors => {
+                res.json(sensors);
             })
             .catch(err => next(err));
     }
@@ -29,11 +33,15 @@ class Sensors {
             .table(table)
             .orderBy({index: "createdAt"})
             .merge(function(sensor) {
+                let data = r.table("data").orderBy({index: r.desc("createdAt")}).filter((data) => {
+                    return data("sensor_id").eq(sensor("id"))
+                });
+
                 return {
                     device: r.table("devices").get(sensor("device_id")),
-                    data: r.table("data").filter((data) => {
-                        return data("sensor_id").eq(sensor("id"))
-                    }).limit(10).coerceTo("ARRAY")
+                    data: data.limit(10).coerceTo("array"),
+                    value: data.nth(0).getField("value"),
+                    lastUpdated: data.nth(0).getField("createdAt")
                 }
             })
             .without('device_id')
