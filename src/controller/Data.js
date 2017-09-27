@@ -18,7 +18,7 @@ function feed(connection) {
             cursor.each((err, row) => {
                 if (err) throw err;
                 console.log(row);
-                Socket.io().sockets.emit('sensor', row.new_val);
+                Socket.io().sockets.emit('sensorData', row.new_val);
             });
         });
 }

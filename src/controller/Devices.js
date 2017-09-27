@@ -44,7 +44,7 @@ class Sensors {
                     if (result.changes && result.changes.length > 0 && result.changes[0] && result.changes[0].new_val) {
                         return res.json(result.changes[0].new_val);
                     } else {
-                        return next(new Error("Nothing changed"));
+                        return res.json(result)
                     }
                 })
                 .catch(err => next(err));

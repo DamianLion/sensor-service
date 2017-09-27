@@ -10,16 +10,20 @@ class Sensors {
             .table(table)
             .get(id)
             .merge(function(sensor) {
+                let data = r.table("data").orderBy({index: r.desc("createdAt")}).filter((data) => {
+                    return data("sensor_id").eq(sensor("id"))
+                });
+
                 return {
                     device: r.table("devices").get(sensor("device_id")),
-                    data: r.table("data").filter((data) => {
-                        return data("sensor_id").eq(sensor("id"))
-                    }).coerceTo("ARRAY")
+                    data: data.limit(10).coerceTo("array"),
+                    value: data.nth(0).getField("value"),
+                    lastUpdated: data.nth(0).getField("createdAt")
                 }
             })
             .run(req._rdbConn)
-            .then(result => {
-                res.json(result);
+            .then(sensors => {
+                res.json(sensors);
             })
             .catch(err => next(err));
     }
@@ -29,11 +33,15 @@ class Sensors {
             .table(table)
             .orderBy({index: "createdAt"})
             .merge(function(sensor) {
+                let data = r.table("data").orderBy({index: r.desc("createdAt")}).filter((data) => {
+                    return data("sensor_id").eq(sensor("id"))
+                });
+
                 return {
                     device: r.table("devices").get(sensor("device_id")),
-                    data: r.table("data").filter((data) => {
-                        return data("sensor_id").eq(sensor("id"))
-                    }).coerceTo("ARRAY")
+                    data: data.limit(10).coerceTo("array"),
+                    value: data.nth(0).getField("value"),
+                    lastUpdated: data.nth(0).getField("createdAt")
                 }
             })
             .without('device_id')
@@ -61,7 +69,7 @@ class Sensors {
                     if (result.changes && result.changes.length > 0 && result.changes[0] && result.changes[0].new_val) {
                         return res.json(result.changes[0].new_val);
                     } else {
-                        return next(new Error("Nothing changed"));
+                        return res.json(result)
                     }
                 })
                 .catch(err => next(err));
