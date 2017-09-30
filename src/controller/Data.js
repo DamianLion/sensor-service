@@ -17,8 +17,10 @@ function feed(connection) {
             // TODO implement filter by which sensor is owned by which user and whom to send this event
             cursor.each((err, row) => {
                 if (err) throw err;
-                console.log(row);
-                Socket.io().sockets.emit('sensorData', row.new_val);
+                Socket.io().sockets.emit('sensorData', Object.assign(row.new_val, {
+                    x: new Date(row.new_val.createdAt).valueOf(),
+                    y: row.new_val.value
+                }));
             });
         });
 }

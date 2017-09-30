@@ -15,10 +15,10 @@ class Sensors {
                 });
 
                 return {
-                    device: r.table("devices").get(sensor("device_id")),
-                    data: data.limit(10).coerceTo("array"),
-                    value: data.nth(0).getField("value"),
-                    lastUpdated: data.nth(0).getField("createdAt")
+                    device: r.table("devices").get(sensor("device_id")).default({}),
+                    data: data.limit(10).without('sensor_id').coerceTo("array").default([]),
+                    value: data.nth(0).getField("value").default(0),
+                    lastUpdated: data.nth(0).getField("createdAt").default(null)
                 }
             })
             .run(req._rdbConn)
@@ -38,10 +38,10 @@ class Sensors {
                 });
 
                 return {
-                    device: r.table("devices").get(sensor("device_id")),
-                    data: data.limit(10).coerceTo("array"),
-                    value: data.nth(0).getField("value"),
-                    lastUpdated: data.nth(0).getField("createdAt")
+                    device: r.table("devices").get(sensor("device_id")).default({}),
+                    data: data.limit(10).without('sensor_id').coerceTo("array").default([]),
+                    value: data.nth(0).getField("value").default(0),
+                    lastUpdated: data.nth(0).getField("createdAt").default(null)
                 }
             })
             .without('device_id')
@@ -49,8 +49,21 @@ class Sensors {
             .then(function (cursor) {
                 return cursor.toArray();
             })
-            .then(result => {
-                res.json(result);
+            .then(sensors => {
+
+                if (req.query.graph == 'true') {
+                    sensors.forEach((sensor, sIndex) => {
+                        sensor.data.forEach((set, dIndex) => {
+                            sensors[sIndex].data[dIndex].x = new Date(set.createdAt).valueOf();
+                            delete sensors[sIndex].data[dIndex].createdAt;
+                            sensors[sIndex].data[dIndex].y = set.value;
+                            delete sensors[sIndex].data[dIndex].value;
+                        });
+                        sensor.data.sort(function(a,b) {return (a.x > b.x) ? 1 : ((b.x > a.x) ? -1 : 0);});
+                    })
+                }
+
+                res.json(sensors);
             })
             .catch(err => next(err));
     }
