@@ -16,7 +16,7 @@ class Sensors {
 
                 return {
                     device: r.table("devices").get(sensor("device_id")).default({}),
-                    data: data.limit(10).without('sensor_id').coerceTo("array").default([]),
+                    data: data.limit(20).without('sensor_id').coerceTo("array").default([]),
                     value: data.nth(0).getField("value").default(0),
                     lastUpdated: data.nth(0).getField("createdAt").default(null)
                 }
@@ -39,7 +39,7 @@ class Sensors {
 
                 return {
                     device: r.table("devices").get(sensor("device_id")).default({}),
-                    data: data.limit(10).without('sensor_id').coerceTo("array").default([]),
+                    data: data.limit(20).without('sensor_id').coerceTo("array").default([]),
                     value: data.nth(0).getField("value").default(0),
                     lastUpdated: data.nth(0).getField("createdAt").default(null)
                 }
@@ -54,7 +54,7 @@ class Sensors {
                 if (req.query.graph == 'true') {
                     sensors.forEach((sensor, sIndex) => {
                         sensor.data.forEach((set, dIndex) => {
-                            sensors[sIndex].data[dIndex].x = new Date(set.createdAt).valueOf();
+                            sensors[sIndex].data[dIndex].x = new Date(set.createdAt).valueOf() / 1000;
                             delete sensors[sIndex].data[dIndex].createdAt;
                             sensors[sIndex].data[dIndex].y = set.value;
                             delete sensors[sIndex].data[dIndex].value;
